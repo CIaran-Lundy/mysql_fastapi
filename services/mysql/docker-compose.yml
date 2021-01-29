@@ -1,15 +1,47 @@
-version: '3.8'
+version: '3.1'
+
 
 services:
-  mysql:
-    image: mysql:latest
-    environment:
-      MYSQL_DATABASE: admin
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
-      MYSQL_ROOT_PASSWORD: admin
-      MYSQL_ROOT_HOST: mysql.api.local
-    ports:
-            - "3306:3306"
-    restart: always
 
+  project_db:
+    volumes:
+      - ./mysql-dump/project:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: project
+  irods_db:
+    volumes:
+      - ./mysql-dump/irods:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: irods
+  owner_db:
+    volumes:
+      - ./mysql-dump/owner:/docker-entrypoint-initdb.d
+    image: mysql:latest    
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: owner
+  analysis_db:
+    volumes:
+      - ./mysql-dump/analysis:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: analysis
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
