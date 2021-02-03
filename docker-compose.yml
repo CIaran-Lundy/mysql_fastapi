@@ -10,20 +10,50 @@ services:
       - "8081:8081"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "$PWD/traefik.dev.toml:/etc/traefik/traefik.toml"
+      - "$PWD/services/traefik/traefik.dev.toml:/etc/traefik/traefik.toml"
     restart: always
-  mysql:
-    image: mysql:latest
-    environment:
-      MYSQL_DATABASE: admin
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin
-      MYSQL_ROOT_PASSWORD: admin
-      MYSQL_ROOT_HOST: mysql.api.local
+  sql_handler:
+    build:
+       context: ./services/sql_handler
+    command: gunicorn main:app --bind 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker
+    expose:
+      - 5000
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik"
-      - "traefik.tcp.routers.mysql.rule=(`mysql.api.local`)"
-      - "traefik.tcp.routers.mysql.entryPoints=mysql"
+      - "traefik.http.routers.fastapi.rule=PathPrefix(`/api/items/{item_id}`)"
+  project_db:
+    volumes:
+      - ./mysql-dump/project:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
     restart: always
-
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: project
+  irods_db:
+    volumes:
+      - ./mysql-dump/irods:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: irods
+  owner_db:
+    volumes:
+      - ./mysql-dump/owner:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: owner
+  analysis_db:
+    volumes:
+      - ./mysql-dump/analysis:/docker-entrypoint-initdb.d
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      MYSQL_DATABASE: analysis
